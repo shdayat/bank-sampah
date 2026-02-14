@@ -19,10 +19,7 @@ import {
   Settings,
   Edit2,
   Save,
-  ShieldCheck,
-  Users,
-  UserPlus,
-  Trash
+  ShieldCheck
 } from 'lucide-react';
 
 // --- DATA AWAL KATALOG SAMPAH ---
@@ -106,11 +103,6 @@ export default function EcoSaveApp() {
   const [loginPin, setLoginPin] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // Admin User Management State
-  const [newUser, setNewUser] = useState({ username: '', name: '', pin: '', role: 'user' });
-  const [editingUserKey, setEditingUserKey] = useState(null);
-  const [editFormData, setEditFormData] = useState({ name: '', pin: '' });
-
   // --- AUTH LOGIC ---
   const handleLogin = (e) => {
     e.preventDefault();
@@ -132,7 +124,7 @@ export default function EcoSaveApp() {
     // Login Sukses
     if (userData.role === 'admin') {
       setUserRole('admin');
-      setActiveTab('admin-users'); // Admin default tab (changed to users)
+      setActiveTab('admin-catalog'); // Admin default tab
     } else {
       setUserRole('user');
       setActiveTab('dashboard'); // User default tab
@@ -196,7 +188,7 @@ export default function EcoSaveApp() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // --- ADMIN LOGIC (CATALOG) ---
+  // --- ADMIN LOGIC ---
   const handleUpdatePrice = (id, newPrice) => {
     setWasteCatalog(prev => prev.map(item => 
       item.id === id ? { ...item, price: parseInt(newPrice) } : item
@@ -207,61 +199,6 @@ export default function EcoSaveApp() {
     setWasteCatalog(prev => prev.map(item => 
       item.id === id ? { ...item, name: newName } : item
     ));
-  };
-
-  // --- ADMIN LOGIC (USER MANAGEMENT) ---
-  const handleAddUser = (e) => {
-    e.preventDefault();
-    const { username, name, pin, role } = newUser;
-    
-    if (usersDb[username]) {
-      alert("Username/ID sudah terdaftar!");
-      return;
-    }
-
-    setUsersDb(prev => ({
-      ...prev,
-      [username]: {
-        pin,
-        role,
-        name,
-        balance: 0,
-        totalWeight: 0,
-        transactions: [],
-        savingGoal: { name: '', targetAmount: 0 }
-      }
-    }));
-    setNewUser({ username: '', name: '', pin: '', role: 'user' });
-    alert("User berhasil ditambahkan.");
-  };
-
-  const handleDeleteUser = (username) => {
-    if (username === currentUser) {
-      alert("Tidak bisa menghapus akun yang sedang login.");
-      return;
-    }
-    if (window.confirm(`Yakin ingin menghapus user ${username}?`)) {
-      const newDb = { ...usersDb };
-      delete newDb[username];
-      setUsersDb(newDb);
-    }
-  };
-
-  const startEditUser = (username, user) => {
-    setEditingUserKey(username);
-    setEditFormData({ name: user.name, pin: user.pin });
-  };
-
-  const saveEditUser = (username) => {
-    setUsersDb(prev => ({
-      ...prev,
-      [username]: {
-        ...prev[username],
-        name: editFormData.name,
-        pin: editFormData.pin
-      }
-    }));
-    setEditingUserKey(null);
   };
 
   // --- COMPONENTS ---
@@ -291,7 +228,7 @@ export default function EcoSaveApp() {
                     type="text" 
                     value={loginUsername}
                     onChange={(e) => setLoginUsername(e.target.value)}
-                    placeholder="Masukkan ID Pengguna"
+                    placeholder="Username (e.g., admin)"
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                     required
                   />
@@ -307,7 +244,7 @@ export default function EcoSaveApp() {
                     type="password" 
                     value={loginPin}
                     onChange={(e) => setLoginPin(e.target.value)}
-                    placeholder="Masukkan PIN"
+                    placeholder="Masukkan 4-6 digit PIN"
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all tracking-widest"
                     required
                   />
@@ -327,10 +264,15 @@ export default function EcoSaveApp() {
                 <LogIn size={20} /> Masuk Sistem
               </button>
             </form>
-            
-            {/* Demo credentials removed as requested */}
-            <div className="mt-8 text-center text-xs text-gray-400">
-               &copy; 2024 EcoSave Digital System
+
+            <div className="mt-6 text-center text-xs text-gray-400 bg-gray-50 p-3 rounded-lg border border-gray-100">
+              <p className="font-semibold mb-1">Demo Credentials:</p>
+              <div className="grid grid-cols-2 gap-2 text-left">
+                <div>👤 User: Budi Santoso</div>
+                <div>🔑 PIN: 1234</div>
+                <div>🛡️ Admin: admin</div>
+                <div>🔑 PIN: 123456</div>
+              </div>
             </div>
           </div>
         </div>
@@ -353,9 +295,8 @@ export default function EcoSaveApp() {
 
       {/* Mobile Bottom Nav (Admin Only) */}
       {userRole === 'admin' && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-6 py-2 flex justify-center items-center gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-           <NavButton icon={<Users size={20} />} label="Users" tab="admin-users" />
-           <NavButton icon={<Settings size={20} />} label="Katalog" tab="admin-catalog" />
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-6 py-2 flex justify-center items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+           <NavButton icon={<Settings size={20} />} label="Atur Katalog" tab="admin-catalog" />
         </nav>
       )}
 
@@ -383,7 +324,6 @@ export default function EcoSaveApp() {
             </>
           ) : (
             <>
-              <SidebarButton icon={<Users size={20} />} label="Manajemen User" tab="admin-users" />
               <SidebarButton icon={<Settings size={20} />} label="Manajemen Katalog" tab="admin-catalog" />
             </>
           )}
@@ -497,135 +437,7 @@ export default function EcoSaveApp() {
     </div>
   );
 
-  // 4. ADMIN VIEW: USER MANAGEMENT
-  const AdminUserManagementView = () => (
-    <div className="space-y-6 animate-fade-in">
-       <header className="flex justify-between items-end bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-2xl text-white shadow-lg mb-8">
-        <div>
-          <h2 className="text-2xl font-bold mb-1">Manajemen Pengguna 👥</h2>
-          <p className="text-blue-100 opacity-90">Tambah user baru, edit nama & reset PIN.</p>
-        </div>
-        <Users size={48} className="text-white opacity-20" />
-      </header>
-
-      {/* Add New User Form */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-lg">
-          <UserPlus size={20} className="text-blue-600"/> Tambah Pengguna Baru
-        </h3>
-        <form onSubmit={handleAddUser} className="grid grid-cols-1 md:grid-cols-5 gap-4">
-           <input
-             type="text"
-             placeholder="Username / ID (Unik)"
-             value={newUser.username}
-             onChange={(e) => setNewUser({...newUser, username: e.target.value})}
-             className="p-3 border rounded-xl text-sm md:col-span-1"
-             required
-           />
-           <input
-             type="text"
-             placeholder="Nama Lengkap"
-             value={newUser.name}
-             onChange={(e) => setNewUser({...newUser, name: e.target.value})}
-             className="p-3 border rounded-xl text-sm md:col-span-1"
-             required
-           />
-           <input
-             type="text"
-             placeholder="PIN (Angka)"
-             value={newUser.pin}
-             onChange={(e) => setNewUser({...newUser, pin: e.target.value})}
-             className="p-3 border rounded-xl text-sm md:col-span-1"
-             required
-           />
-           <select
-             value={newUser.role}
-             onChange={(e) => setNewUser({...newUser, role: e.target.value})}
-             className="p-3 border rounded-xl text-sm md:col-span-1"
-           >
-             <option value="user">User Warga</option>
-             <option value="admin">Administrator</option>
-           </select>
-           <button type="submit" className="bg-blue-600 text-white font-semibold p-3 rounded-xl hover:bg-blue-700 transition md:col-span-1">
-             + Tambah
-           </button>
-        </form>
-      </div>
-
-      {/* User List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>
-                <th className="p-4 text-sm font-semibold text-gray-600">ID / Username</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">Nama Lengkap</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">PIN</th>
-                <th className="p-4 text-sm font-semibold text-gray-600">Role</th>
-                <th className="p-4 text-sm font-semibold text-gray-600 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {Object.entries(usersDb).map(([username, user]) => (
-                <tr key={username} className="hover:bg-gray-50 transition">
-                  <td className="p-4 font-medium text-gray-800">{username}</td>
-                  
-                  {/* Edit Mode Logic */}
-                  {editingUserKey === username ? (
-                     <>
-                       <td className="p-4">
-                         <input 
-                           value={editFormData.name}
-                           onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
-                           className="border p-1 rounded w-full text-sm"
-                         />
-                       </td>
-                       <td className="p-4">
-                         <input 
-                           value={editFormData.pin}
-                           onChange={(e) => setEditFormData({...editFormData, pin: e.target.value})}
-                           className="border p-1 rounded w-20 text-sm"
-                         />
-                       </td>
-                       <td className="p-4 text-sm capitalize text-gray-500">{user.role}</td>
-                       <td className="p-4 text-right space-x-2">
-                         <button onClick={() => saveEditUser(username)} className="text-green-600 hover:text-green-800 bg-green-50 p-2 rounded-lg">
-                           <Save size={16}/>
-                         </button>
-                         <button onClick={() => setEditingUserKey(null)} className="text-gray-500 hover:text-gray-700 bg-gray-50 p-2 rounded-lg">
-                           <X size={16}/>
-                         </button>
-                       </td>
-                     </>
-                  ) : (
-                    <>
-                      <td className="p-4 text-gray-600">{user.name}</td>
-                      <td className="p-4 font-mono text-gray-500 text-sm">{user.pin}</td>
-                      <td className="p-4">
-                        <span className={`text-xs px-2 py-1 rounded-full font-semibold ${user.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right space-x-2">
-                        <button onClick={() => startEditUser(username, user)} className="text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition" title="Edit User">
-                           <Edit2 size={16} />
-                        </button>
-                        <button onClick={() => handleDeleteUser(username)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition" title="Hapus User">
-                           <Trash size={16} />
-                        </button>
-                      </td>
-                    </>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-
-  // 5. USER VIEWS (Dashboard, Deposit, etc)
+  // 4. USER VIEWS (Dashboard, Deposit, etc)
   const DashboardView = () => {
     // Logic Target
     const progressPercentage = savingGoal.targetAmount > 0 ? Math.min((balance / savingGoal.targetAmount) * 100, 100) : 0;
@@ -889,10 +701,7 @@ export default function EcoSaveApp() {
       <Navigation />
       <main className="max-w-3xl mx-auto p-6 pb-24 md:pb-6 md:pt-10">
         {userRole === 'admin' ? (
-           <>
-             {activeTab === 'admin-catalog' && <AdminCatalogView />}
-             {activeTab === 'admin-users' && <AdminUserManagementView />}
-           </>
+           activeTab === 'admin-catalog' && <AdminCatalogView />
         ) : (
            <>
              {activeTab === 'dashboard' && <DashboardView />}
