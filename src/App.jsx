@@ -354,6 +354,7 @@ export default function EcoSaveApp() {
       {/* Mobile Bottom Nav (Admin Only) */}
       {userRole === 'admin' && (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-6 py-2 flex justify-center items-center gap-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+           <NavButton icon={<LayoutDashboard size={20} />} label="Dashboard" tab="admin-dashboard" />
            <NavButton icon={<Users size={20} />} label="Users" tab="admin-users" />
            <NavButton icon={<Settings size={20} />} label="Katalog" tab="admin-catalog" />
         </nav>
@@ -383,6 +384,7 @@ export default function EcoSaveApp() {
             </>
           ) : (
             <>
+              <SidebarButton icon={<LayoutDashboard size={20} />} label="Dashboard" tab="admin-dashboard" />
               <SidebarButton icon={<Users size={20} />} label="Manajemen User" tab="admin-users" />
               <SidebarButton icon={<Settings size={20} />} label="Manajemen Katalog" tab="admin-catalog" />
             </>
@@ -430,7 +432,108 @@ export default function EcoSaveApp() {
     </button>
   );
 
-  // 3. ADMIN VIEW: CATALOG MANAGEMENT
+  // 3. ADMIN VIEW: DASHBOARD
+  const AdminDashboardView = () => {
+    // Calculate statistics
+    let totalDeposits = 0;
+    let totalEarnings = 0;
+    let totalCitizens = 0;
+
+    Object.entries(usersDb).forEach(([username, user]) => {
+      if (user.role === 'user') {
+        totalDeposits += user.transactions.length;
+        totalEarnings += user.balance;
+        totalCitizens += 1;
+      }
+    });
+
+    // Get top contributors
+    const topContributors = Object.entries(usersDb)
+      .filter(([username, user]) => user.role === 'user')
+      .sort(([, a], [, b]) => (b.totalWeight || 0) - (a.totalWeight || 0))
+      .slice(0, 5);
+
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <header className="flex justify-between items-end bg-gradient-to-r from-purple-600 to-indigo-600 p-6 rounded-2xl text-white shadow-lg mb-8">
+          <div>
+            <h2 className="text-2xl font-bold mb-1">Laporan Dashboard 📊</h2>
+            <p className="text-purple-100 opacity-90">Statistik keseluruhan Bank Sampah.</p>
+          </div>
+          <LayoutDashboard size={48} className="text-white opacity-20" />
+        </header>
+
+        {/* Main Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Total Deposits */}
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl text-white shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-blue-100">Jumlah Setoran</h3>
+              <PlusCircle size={24} className="text-blue-200" />
+            </div>
+            <div className="text-4xl font-bold">{totalDeposits}</div>
+            <p className="text-xs text-blue-100 mt-2">Total transaksi dari semua warga</p>
+          </div>
+
+          {/* Total Earnings */}
+          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-6 rounded-2xl text-white shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-emerald-100">Perolehan Warga</h3>
+              <Wallet size={24} className="text-emerald-200" />
+            </div>
+            <div className="text-4xl font-bold">{formatIDR(totalEarnings)}</div>
+            <p className="text-xs text-emerald-100 mt-2">Total saldo warga terkumpul</p>
+          </div>
+
+          {/* Total Citizens */}
+          <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-6 rounded-2xl text-white shadow-lg">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-amber-100">Total Warga Aktif</h3>
+              <Users size={24} className="text-amber-200" />
+            </div>
+            <div className="text-4xl font-bold">{totalCitizens}</div>
+            <p className="text-xs text-amber-100 mt-2">Anggota Bank Sampah</p>
+          </div>
+        </div>
+
+        {/* Top Contributors */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100">
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+              <TrendingUp size={20} className="text-purple-600"/> Warga Teraktif (Kontributor Terbanyak)
+            </h3>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {topContributors.length > 0 ? (
+              topContributors.map(([username, user], index) => (
+                <div key={username} className="p-4 flex items-center justify-between hover:bg-gray-50 transition">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-gradient-to-br from-purple-400 to-indigo-500 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-sm">
+                      #{index + 1}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-800">{user.name}</div>
+                      <div className="text-xs text-gray-500">{username}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold text-emerald-600">{user.totalWeight || 0} Kg</div>
+                    <div className="text-xs text-gray-500">Total sampah</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-10 text-center text-gray-400">
+                <p>Belum ada data warga</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 4. ADMIN VIEW: CATALOG MANAGEMENT
   const AdminCatalogView = () => (
     <div className="space-y-6 animate-fade-in">
        <header className="flex justify-between items-end bg-gradient-to-r from-emerald-600 to-teal-600 p-6 rounded-2xl text-white shadow-lg mb-8">
@@ -497,7 +600,7 @@ export default function EcoSaveApp() {
     </div>
   );
 
-  // 4. ADMIN VIEW: USER MANAGEMENT
+  // 5. ADMIN VIEW: USER MANAGEMENT
   const AdminUserManagementView = () => (
     <div className="space-y-6 animate-fade-in">
        <header className="flex justify-between items-end bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-2xl text-white shadow-lg mb-8">
@@ -625,7 +728,7 @@ export default function EcoSaveApp() {
     </div>
   );
 
-  // 5. USER VIEWS (Dashboard, Deposit, etc)
+  // 6. USER VIEWS (Dashboard, Deposit, etc)
   const DashboardView = () => {
     // Logic Target
     const progressPercentage = savingGoal.targetAmount > 0 ? Math.min((balance / savingGoal.targetAmount) * 100, 100) : 0;
@@ -890,6 +993,7 @@ export default function EcoSaveApp() {
       <main className="max-w-3xl mx-auto p-6 pb-24 md:pb-6 md:pt-10">
         {userRole === 'admin' ? (
            <>
+             {activeTab === 'admin-dashboard' && <AdminDashboardView />}
              {activeTab === 'admin-catalog' && <AdminCatalogView />}
              {activeTab === 'admin-users' && <AdminUserManagementView />}
            </>
